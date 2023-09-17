@@ -65,10 +65,10 @@ resource "aws_instance" "web_app" {
               export AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY_ID}
               export AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_ACCESS_KEY}
               aws ecr get-login-password --region ${var.AWS_REGION} | docker login --username AWS --password-stdin ${var.ECR_REPOSITORY}
-              sudo docker run -d -p 5000:5000 568406210619.dkr.ecr.us-east-1.amazonaws.com/simple-web-app:latest
+              sudo docker run -d -p 5000:5000 ${var.ECR_REPOSITORY}/simple-web-app:latest
               EOF
 
-  iam_instance_profile = "ECRAdmin"
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
   depends_on = [ aws_iam_instance_profile.ec2_instance_profile ]
 }
 
@@ -115,14 +115,6 @@ resource "aws_iam_role" "ec2_role" {
             },
             "Effect": "Allow",
             "Sid": ""
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:*",
-                "s3-object-lambda:*"
-            ],
-            "Resource": "*"
         }
     ]})
 }
