@@ -115,6 +115,14 @@ resource "aws_iam_role" "ec2_role" {
             },
             "Effect": "Allow",
             "Sid": ""
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*",
+                "s3-object-lambda:*"
+            ],
+            "Resource": "*"
         }
     ]})
 }
