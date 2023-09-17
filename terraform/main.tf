@@ -54,8 +54,7 @@ resource "aws_instance" "web_app" {
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.web_app_sg.id]
 
-  for_each  = toset(data.aws_subnets.default_subnets.ids)
-  subnet_id = each.value
+  subnet_id = data.aws_subnets.default_subnets.ids[0]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -63,6 +62,73 @@ resource "aws_instance" "web_app" {
               sudo yum -y install docker
               sudo service docker start
               sudo usermod -a -G docker ec2-user
+              export AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY_ID}
+              export AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_ACCESS_KEY}
+              aws ecr get-login-password --region ${var.AWS_REGION} | docker login --username AWS --password-stdin ${var.ECR_REPOSITORY}
               sudo docker run -d -p 5000:5000 568406210619.dkr.ecr.us-east-1.amazonaws.com/simple-web-app:latest
               EOF
+
+  iam_instance_profile = "ECRAdmin"
+  depends_on = [ aws_iam_instance_profile.ec2_instance_profile ]
+}
+
+resource "aws_iam_policy" "ec2_policy" {
+  name        = "ec2_policy"
+  description = "Allow EC2 to access ECR"
+  policy      = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "cloudtrail:LookupEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:AWSServiceName": [
+                        "replication.ecr.amazonaws.com"
+                    ]
+                }
+            }
+        }
+    ]})
+}
+
+resource "aws_iam_role" "ec2_role" {
+  name               = "ec2_role"
+  assume_role_policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]})
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_policy_attachment" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.ec2_policy.arn
+  
+  depends_on = [ aws_iam_policy.ec2_policy, aws_iam_role.ec2_role ]
+}
+
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2_profile"
+  role = aws_iam_role.ec2_role.name
+
+  depends_on = [ aws_iam_role.ec2_role ]
 }
