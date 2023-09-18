@@ -69,6 +69,10 @@ resource "aws_instance" "web_app" {
 
   subnet_id = data.aws_subnets.default_subnets.ids[0]
 
+  tags = {
+    Name = "web_app"
+  }
+
   user_data = <<-EOF
               #!/bin/bash
               sudo yum -y update
