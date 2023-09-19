@@ -1,9 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "dev-applications-backend-state-worachai"
-    key            = "dev/05-ec2-instance/web/backend-state"
+    bucket         = "simple-web-app-backend-state-worachai"
+    key            = "dev/ec2-instance/web/backend-state"
     region         = "us-east-1"
-    dynamodb_table = "dev-applications-locks"
+    dynamodb_table = "simple-web-app-locks"
     encrypt        = true
   }
 }
