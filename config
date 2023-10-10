@@ -1,0 +1,22 @@
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://9441-2001-fb1-c1-f45c-e870-16e9-6dcd-3eb6.ngrok-free.app/
+  name: default
+- cluster:
+    server: https://9441-2001-fb1-c1-f45c-e870-16e9-6dcd-3eb6.ngrok-free.app/
+  name: test
+contexts:
+- context:
+    cluster: test
+    namespace: test
+    user: dev
+  name: dev
+current-context: dev
+kind: Config
+preferences: {}
+users:
+- name: dev
+  user:
+    client-certificate: client.crt
+    client-key: client.key
